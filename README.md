@@ -42,3 +42,30 @@ After this, your N8N access URL will be: example - 9eight9.yourdomain.com. ( as 
 
 # step 4: then Simply you have create your own workflow or simply impport my provided workflows. 
 ex. SeceoKnight Alert - IP Reputation check.json
+
+# Wazuh/SeceoKnight Server side Configuration to receive alert in our workflow.
+
+1. add the script custom-n8n in path - /var/ossec/integrations/
+
+       nano /var/ossec/integrations/custom-n8n
+
+2. Permission and ownership of script :
+
+       chmod 750 custom-n8n
+       chown root:wazuh custom-n8n
+
+3. add the integration block inside /var/ossec/etc/ossec.conf
+
+        <integration>
+          <name>custom-n8n</name>
+          <hook_url>https://9eight9.seceokniight.online/webhook-test/e645d98e-f80c-47e5-b96e-762c96f3db76</hook_url> <!-- Replace with your n8n hook URL -->
+          <!-- <level>4</level> -->
+          <rule_id>81606</rule_id> <!-- Replace rule id's which you want to send to our workflow -->
+          <alert_format>json</alert_format>
+        </integration>
+
+4. Restart the server.
+
+       sudo systemctl restart wazuh-manager
+
+

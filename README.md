@@ -1,8 +1,8 @@
 # SeceoKnight_with_N8N
 
-Step 1: Deploy your Ubuntu machine on Virtual or AWS.
+# Step 1: Deploy your Ubuntu machine on Virtual or AWS.
 
-Step 2: Install N8N using following steps for your convenience.
+# Step 2: Install N8N using following steps for your convenience.
 
 # Download this script on your ubuntu machine.
 
@@ -38,4 +38,7 @@ Points to: (Public static IP of your Ubuntu server)
 After this, your N8N access URL will be: example - 9eight9.yourdomain.com. ( as we add in above command for installation time).
 
 
+# step 3: after complete installation you have to access n8n by using provided url by n8n after compplete installation.
 
+# step 4: then Simply you have create your own workflow or simply impport my provided workflows. 
+ex. SeceoKnight Alert - IP Reputation check.json

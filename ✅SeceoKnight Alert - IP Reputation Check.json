@@ -1,0 +1,440 @@
+{
+  "name": "✅SeceoKnight Alert - IP Reputation Check",
+  "nodes": [
+    {
+      "parameters": {
+        "preBuiltAgentsCalloutHttpRequest": "",
+        "httpVariantWarning": "",
+        "curlImport": "",
+        "method": "GET",
+        "": "",
+        "url": "=https://www.virustotal.com/api/v3/ip_addresses/{{ $json.ip_address }}\n",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "virusTotalApi",
+        "provideSslCertificates": false,
+        "sendQuery": false,
+        "sendHeaders": false,
+        "sendBody": false,
+        "options": {},
+        "infoMessage": ""
+      },
+      "id": "e193260d-6b59-4b8c-a23a-06aa22bbb3c9",
+      "name": "VirusTotal IP reputation check",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -944,
+        144
+      ],
+      "typeVersion": 4.2,
+      "extendsCredential": "virusTotalApi",
+      "credentials": {
+        "virusTotalApi": {
+          "id": "NYl854KEgGH1gy9a",
+          "name": "VirusTotal account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Threat Intelligence Summary</title>\n  <style>\n    body {\n      font-family: \"Segoe UI\", sans-serif;\n      background-color: #121212;\n      color: #f0f0f0;\n      padding: 20px;\n    }\n    .container {\n      display: flex;\n      gap: 20px;\n      flex-wrap: wrap;\n    }\n    .card {\n      background-color: #1e1e1e;\n      border-radius: 12px;\n      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);\n      padding: 20px;\n      width: 100%;\n      max-width: 500px;\n      border: 1px solid #333;\n    }\n    h1 {\n      color: #00bfff;\n    }\n    h2 {\n      margin-top: 0;\n      color: #4fc3f7;\n    }\n    .section-title {\n      font-weight: bold;\n      margin-top: 15px;\n      color: #90caf9;\n    }\n    .label {\n      font-weight: bold;\n      color: #c5e1a5;\n    }\n    ul {\n      margin-top: 5px;\n      padding-left: 20px;\n    }\n    li {\n      margin-bottom: 4px;\n    }\n    .tag {\n      background-color: #333;\n      color: #c5cae9;\n      border-radius: 5px;\n      padding: 2px 6px;\n      margin-right: 5px;\n      display: inline-block;\n    }\n    a {\n      color: #81d4fa;\n      text-decoration: none;\n    }\n    a:hover {\n      text-decoration: underline;\n    }\n    .status {\n      margin-top: 10px;\n      margin-bottom: 10px;\n      font-weight: bold;\n      padding: 8px 16px;\n      border-radius: 8px;\n      display: inline-block;\n    }\n    .safe {\n      background-color: #2e7d32;\n      color: #a5d6a7;\n    }\n    .suspicious {\n      background-color: #c62828;\n      color: #ffab91;\n    }\n  </style>\n</head>\n<body>\n  <h1>IP Threat Summary</h1>\n  <p><span class=\"label\">IP:</span> {{ $json.summary.VirusTotal.IP }}</p>\n  \n  <p><span class=\"label\">Description:</span> {{ $json.summary.VirusTotal.Description }}</p>\n  \n  <div class=\"status {{ $json.summary.Status === 'Safe' ? 'safe' : 'suspicious' }}\">\n    {{ $json.summary.Status }}\n  </div>\n\n  <div class=\"container\">\n    <!-- VirusTotal Section -->\n    <div class=\"card\">\n      <h2>VirusTotal</h2>\n      <p><span class=\"label\">Reputation:</span> {{ $json.summary.VirusTotal.Reputation }}</p>\n      <p><span class=\"label\">WHOIS:</span> {{ $json.summary.VirusTotal.Whois }}</p>\n      <p><span class=\"label\">Tags:</span> {{ $json.summary.VirusTotal.Tags_HTML }}</p>\n      <p class=\"section-title\">Analysis Stats</p>\n      <ul>\n        <li>Harmless: {{ $json.summary.VirusTotal.Harmless }}</li>\n        <li>Malicious: {{ $json.summary.VirusTotal.Malicious }}</li>\n        <li>Suspicious: {{ $json.summary.VirusTotal.Suspicious }}</li>\n        <li>Undetected: {{ $json.summary.VirusTotal.Undetected }}</li>\n      </ul>\n    </div>\n\n    <!-- AlienVault Section -->\n    <div class=\"card\">\n      <h2>AlienVault</h2>\n      <p><span class=\"label\">Reputation:</span> {{ $json.summary.AlienVault.Reputation }}</p>\n      <p><span class=\"label\">WHOIS:</span> \n          <a href=\"{{ $json.summary.AlienVault.Whois }}\" target=\"_blank\">View WHOIS</a>\n      </p>\n      <p><span class=\"label\">Pulse Count:</span> {{ $json.summary.AlienVault.Pulse_Count }}</p>\n      <p class=\"section-title\">Pulse Names</p>\n      <div>\n        {{ $json.summary.AlienVault.Pulse_Names.split(',').map(name => `<span class=\"tag\">${name.trim()}</span>`).join('') }}\n      </div>\n    </div>\n\n    <p style=\"margin-top: 5px;\">Generated at: {{ $json.summary.Generated_At }}</p>\n  </div>\n</body>\n</html>\n"
+      },
+      "id": "21389219-c54c-4856-9b1e-339af073d389",
+      "name": "IP summary display",
+      "type": "n8n-nodes-base.html",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\n\nconst src = body?.all_fields?.data?.srcip || null;\nconst dst = body?.all_fields?.data?.dstip || null;\n\n// Function to check if IP is public\nfunction isPublic(ip) {\n  if (!ip) return false;\n\n  const privateRanges = [\n    /^10\\./,\n    /^192\\.168\\./,\n    /^172\\.(1[6-9]|2[0-9]|3[0-1])\\./,\n    /^127\\./,\n    /^169\\.254\\./\n  ];\n\n  return !privateRanges.some(r => r.test(ip));\n}\n\n// Decide which IP to use\nlet finalIp = \"No public IP found\";\n\nif (isPublic(src)) {\n  finalIp = src;\n} else if (isPublic(dst)) {\n  finalIp = dst;\n}\n\n// Description\nconst reason =\n  body?.all_fields?.data?.msg ||\n  body?.title ||\n  \"No reason found\";\n\n// SAME OUTPUT FORMAT YOU WANT\nreturn [\n  {\n    json: {\n      ip_address: finalIp,\n      description: reason\n    }\n  }\n];\n"
+      },
+      "id": "21b7c5cc-e667-490c-964e-0204bd54901a",
+      "name": "Extract IOCs",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -1248,
+        288
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "preBuiltAgentsCalloutHttpRequest": "",
+        "httpVariantWarning": "",
+        "curlImport": "",
+        "method": "GET",
+        "": "",
+        "url": "=https://otx.alienvault.com/api/v1/indicators/IPv4/{{ $json.ip_address }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "alienVaultApi",
+        "provideSslCertificates": false,
+        "sendQuery": false,
+        "sendHeaders": false,
+        "sendBody": false,
+        "options": {},
+        "infoMessage": ""
+      },
+      "id": "2c600384-59a1-463b-9180-c811c1ad41ce",
+      "name": "AlienVault Lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -944,
+        400
+      ],
+      "typeVersion": 4.2,
+      "extendsCredential": "alienVaultApi",
+      "credentials": {
+        "alienVaultApi": {
+          "id": "KTWTnlh7q2blCJTh",
+          "name": "AlienVault account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "191f92a8-e5cb-4b2f-bad7-6a0c32301f97",
+      "name": "Merge Threat Data",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        -656,
+        288
+      ],
+      "typeVersion": 3.2,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "let virustotal = null;\nlet alienvault = null;\nlet metadata = null;\n\nfor (const item of items) {\n  if (item.json?.data?.attributes) {\n    // Likely VirusTotal result\n    virustotal = item.json;\n  } else if (item.json?.pulse_info) {\n    // Likely AlienVault result\n    alienvault = item.json;\n  } else if (item.json?.description) {\n    // The Wazuh description or IP metadata\n    metadata = item.json;\n  }\n}\n\nreturn [{\n  json: {\n    virustotal,\n    alienvault,\n    description: metadata?.description || \"No description\",\n    ip_address: metadata?.ip_address || virustotal?.data?.id || \"Unknown IP\"\n  }\n}];\n"
+      },
+      "id": "69a5a1b5-b3df-46cd-9818-18d185f4e23c",
+      "name": "Process Intel Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -448,
+        288
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get merged input (single item array)\nconst data = items[0].json;\n\n// VirusTotal extraction\nconst vt = data.virustotal?.data?.attributes;\nconst vtTagsArray = vt?.tags || [];\n\nconst malicious = vt?.last_analysis_stats?.malicious || 0;\nconst suspicious = vt?.last_analysis_stats?.suspicious || 0;\n\nconst vtSummary = vt ? {\n  IP: data.virustotal.data.id,\n  Reputation: vt.reputation,\n  Tags: vtTagsArray.join(', '),\n  Tags_HTML: vtTagsArray.map(tag =>\n    `<span class=\"tag\">${tag.trim()}</span>`\n  ).join(''),\n  Harmless: vt.last_analysis_stats?.harmless || 0,\n  Malicious: malicious,\n  Suspicious: suspicious,\n  Undetected: vt.last_analysis_stats?.undetected || 0,\n  Whois: vt.whois?.split(\"\\n\")[0] || \"No WHOIS info\",\n  Description: data.description || \"No description\"\n} : {};\n\n// AlienVault extraction with fallback\nlet avSummary = {};\nlet isAlienVaultSuspicious = false;\n\nif (data.alienvault && data.alienvault.pulse_info) {\n  const av = data.alienvault;\n  const pulseNamesArray = (av?.pulse_info?.pulses || []).map(p => p.name);\n  const pulseCount = av?.pulse_info?.count || 0;\n\n  isAlienVaultSuspicious = pulseCount > 0;\n\n  avSummary = {\n    IP: av.indicator,\n    Reputation: av.reputation,\n    Whois: av.whois,\n    Pulse_Count: pulseCount,\n    Pulse_Names: pulseNamesArray.join(', '),\n    Pulse_Names_HTML: pulseNamesArray.map(name =>\n      `<span class=\"tag\">${name.trim()}</span>`\n    ).join('')\n  };\n} else {\n  avSummary = {\n    IP: 'N/A (Private IP)',\n    Reputation: 'N/A',\n    Whois: 'N/A',\n    Pulse_Count: 0,\n    Pulse_Names: 'N/A',\n    Pulse_Names_HTML: ''\n  };\n}\n\n// Global Status Logic\nconst isVirusTotalSuspicious = malicious > 0 || suspicious > 0;\nconst finalStatus = (isVirusTotalSuspicious || isAlienVaultSuspicious) ? 'Suspicious' : 'Safe';\n\n// Timestamp\nconst generatedAt = new Intl.DateTimeFormat('en-IN', {\n  dateStyle: 'short',\n  timeStyle: 'medium',\n  timeZone: 'Asia/Kolkata'\n}).format(new Date());\n\n// Final Output\nreturn [\n  {\n    json: {\n      summary: {\n        VirusTotal: vtSummary,\n        AlienVault: avSummary,\n        Status: finalStatus,\n        Generated_At: generatedAt\n      }\n    }\n  }\n];\n"
+      },
+      "id": "dfee5f4c-163e-4040-87fc-fb73551ba8ff",
+      "name": "Generate IP Summary",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -224,
+        288
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "559feb80-bac9-4300-82ac-7fbec9c24320",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.summary.Status }}",
+                    "rightValue": "Suspicious"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a06706c7-c431-44b2-8999-13a7e1b37dd0",
+      "name": "Filter Suspicious IPs",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        32,
+        560
+      ],
+      "typeVersion": 3.2,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "authentication": "basicAuth",
+        "resource": "incident",
+        "operation": "create",
+        "short_description": "=IP: {{ $json.summary.VirusTotal.IP }} \n{{ $json.summary.VirusTotal.Description }}",
+        "additionalFields": {}
+      },
+      "id": "f4201e48-172e-40d6-bd9d-65240e9e99b6",
+      "name": "Create IP Incident",
+      "type": "n8n-nodes-base.serviceNow",
+      "position": [
+        240,
+        448
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": false,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "C0913JPTZBJ",
+          "cachedResultName": "n8n-trigger"
+        },
+        "text": "={{ $json.summary.VirusTotal.Status === 'Safe' ? '✅' : '🚨' }} IP {{ $json.summary.VirusTotal.IP }}\nStatus: *{{ $json.summary.Status }}*\nEvent: {{ $json.summary.VirusTotal.Description }}\n",
+        "otherOptions": {}
+      },
+      "id": "7177176e-1f3f-40f9-a250-5e3186cddf6a",
+      "name": "Slack IP Alert",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        240,
+        672
+      ],
+      "webhookId": "c246176e-5a7c-4223-9c41-196ed03ceaa2",
+      "typeVersion": 2.3,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## 📥 Alert Ingestion & IOC Extraction\n- Receives alert from Splunk with IP address.\n- Extracts source IP and event reason.\n- Sends it to VirusTotal, AlienVault, and Merge nodes.\n",
+        "height": 180,
+        "width": 340
+      },
+      "id": "d63339ab-083d-49c1-9697-1c10bcc0d470",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1488,
+        80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 🧪 Threat Enrichment & Summary Generation\n- Queries VirusTotal and AlienVault for reputation.\n- Merges data, tags, WHOIS, and pulse info.\n- Creates a readable summary of threat posture.\n",
+        "height": 140,
+        "width": 600,
+        "color": 3
+      },
+      "id": "f6256688-3d0b-45bb-b2e4-d8631922a075",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -720,
+        80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 🚨 Alert Routing & Analyst Notification\n- If IP is marked suspicious:\n  - Sends Slack alert\n  - Creates an incident ticket\n- Emails an HTML summary report to the SOC inbox.\n",
+        "height": 200,
+        "width": 340
+      },
+      "id": "734fe836-3283-41f0-a790-e9a429495eed",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        192
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e645d98e-f80c-47e5-b96e-762c96f3db76",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "2858829c-e3e5-4ee0-8e9a-e76471a57a3a",
+      "name": "SeceoKnight Alert",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -1488,
+        288
+      ],
+      "webhookId": "e645d98e-f80c-47e5-b96e-762c96f3db76",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "sendTo": "vaibhavhandekar3@gmail.com",
+        "subject": "[New Alert] IP Reputation Check Summary",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        0
+      ],
+      "id": "a35eb586-da0b-4d26-8fd7-402af4af999d",
+      "name": "Send a message1",
+      "webhookId": "6e8f7355-2205-4262-b2aa-7e1a5687d01d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kMdnA6c0XGnEmU8O",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract IOCs": {
+      "main": [
+        [
+          {
+            "node": "VirusTotal IP reputation check",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AlienVault Lookup",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Threat Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "AlienVault Lookup": {
+      "main": [
+        [
+          {
+            "node": "Merge Threat Data",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge Threat Data": {
+      "main": [
+        [
+          {
+            "node": "Process Intel Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IP summary display": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Intel Data": {
+      "main": [
+        [
+          {
+            "node": "Generate IP Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate IP Summary": {
+      "main": [
+        [
+          {
+            "node": "IP summary display",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter Suspicious IPs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Suspicious IPs": {
+      "main": [
+        [
+          {
+            "node": "Create IP Incident",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack IP Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VirusTotal IP reputation check": {
+      "main": [
+        [
+          {
+            "node": "Merge Threat Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SeceoKnight Alert": {
+      "main": [
+        [
+          {
+            "node": "Extract IOCs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a47de8f6-da7a-4719-a25d-e2594cc0a0f9",
+  "meta": {
+    "instanceId": "d7fd36c8cfab19e41840b974db914b5932d1d831fc0c8e87baf72d45b7f6ede0"
+  },
+  "id": "Vc0m49FFjMxVxi0G",
+  "tags": []
+}

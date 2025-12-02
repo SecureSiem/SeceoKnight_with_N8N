@@ -69,3 +69,7 @@ ex. SeceoKnight Alert - IP Reputation check.json
        sudo systemctl restart wazuh-manager
 
 
+REsult for - ✅SeceoKnight Alert - IP Reputation Check
+
+
+

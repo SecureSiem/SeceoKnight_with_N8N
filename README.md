@@ -70,6 +70,9 @@ ex. SeceoKnight Alert - IP Reputation check.json
 
 
 REsult for - ✅SeceoKnight Alert - IP Reputation Check
+![Screenshot 1](images/screenshot.png)
 
+REsult for EmailPhishingDetection
+![Screenshot 2](images/Screenshot2.png)
 
 
